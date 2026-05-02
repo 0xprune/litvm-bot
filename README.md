@@ -49,6 +49,7 @@ git clone https://github.com/0xprune/litvm-bot.git
 cd litvm-bot
 npm install
 cp .env.example .env
+npm run install:browsers
 ```
 
 Edit `.env`, then verify your derived wallet addresses:
@@ -233,6 +234,22 @@ npm run build
 ```
 
 ## 🧯 Troubleshooting
+
+### Playwright says browser executable does not exist
+
+Install the Chromium browser binary before running real browser tasks:
+
+```bash
+npm run install:browsers
+```
+
+On Linux/VPS, install system dependencies too:
+
+```bash
+npm run install:browsers:with-deps
+```
+
+If this step is missing, faucet/browser tasks cannot open the website and the bot will stop that wallet before GM/ecosystem tasks.
 
 ### Balance stays `0.0000 zkLTC`
 

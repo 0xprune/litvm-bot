@@ -67,6 +67,17 @@ export function createFaucetTask(config: BotConfig): TaskHandler {
       expectTx: false
     });
 
+    if (attempt.status === "failed") {
+      return {
+        ...result,
+        status: "failed",
+        proxy: attempt.proxy,
+        balance: `${formatEther(startingBalance)} zkLTC`,
+        message: attempt.message,
+        error: attempt.error
+      };
+    }
+
     const fundedBalance = await waitForFaucetFunding(config, wallet.address, startingBalance);
 
     if (fundedBalance > startingBalance && fundedBalance > 0n) {

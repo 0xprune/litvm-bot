@@ -109,6 +109,8 @@ const dynamicImport = new Function("specifier", "return import(specifier)") as (
 
 let activeBrowserFlows = 0;
 const browserFlowQueue: Array<() => void> = [];
+const PLAYWRIGHT_BROWSER_INSTALL_MESSAGE =
+  "Playwright browser executable is missing. Run `npx playwright install chromium` first. On Linux/VPS, use `npx playwright install --with-deps chromium` if system dependencies are also missing.";
 
 export async function loadPlaywright(): Promise<PlaywrightModule> {
   try {
@@ -183,11 +185,16 @@ export async function runBrowserFlow(
         : `${spec.description} reached the UI via ${session.proxyLabel}, but no transaction was submitted. Manual review may be required.`
     };
   } catch (error) {
+    const rawError = error instanceof Error ? error.message : String(error);
+    const missingBrowser = isPlaywrightBrowserInstallError(rawError);
+
     return {
       ...base,
-      status: "manual",
-      message: `${spec.description} could not complete automatically. Manual handoff may be required at ${spec.url}.`,
-      error: error instanceof Error ? error.message : String(error)
+      status: missingBrowser ? "failed" : "manual",
+      message: missingBrowser
+        ? PLAYWRIGHT_BROWSER_INSTALL_MESSAGE
+        : `${spec.description} could not complete automatically. Manual handoff may be required at ${spec.url}.`,
+      error: rawError
     };
   } finally {
     try {
@@ -196,6 +203,10 @@ export async function runBrowserFlow(
       releaseBrowserSlot();
     }
   }
+}
+
+function isPlaywrightBrowserInstallError(message: string): boolean {
+  return /Executable doesn't exist/i.test(message) && /playwright install/i.test(message);
 }
 
 async function acquireBrowserFlowSlot(limit: number): Promise<() => void> {
